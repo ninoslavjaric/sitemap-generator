@@ -99,16 +99,17 @@ public class Main {
 				contentType = huc.getHeaderField("Content-type");
 				if(contentType.contains("text/html") && contentType != null)
 					supportedLinks.add(string);
-			} catch (IOException e) {
-				Logger.getLogger("content-type").warning("Ne valja nesto");
+				System.out.println(huc.getResponseCode());
+			} catch (IOException | NullPointerException e) {
+				Logger.getLogger("content-type").warning("Ne valja nesto "+string);
 				e.printStackTrace();
 			}
 		}
 	}
 
 	private static URL initUrl(String[] params){
-		String link = params.length>=1?params[0]:"http://www.plemenito.com";
-		String updateLink = params.length>=2?params[1]:"http://www.plemenito.com/sitemap-update";
+		String link = params.length>=1?params[0]:null;
+		String updateLink = params.length>=2?params[1]:null;
 		URL url = null, updateUrl = null;
 		try {
 			url = new URL(link);
@@ -117,7 +118,9 @@ public class Main {
 			sitemapTarget = sitemapTarget==null ? updateUrl : sitemapTarget;
 		} catch(MalformedURLException e){
 			e.printStackTrace();
-		}
+			System.out.println("You did not enter proper parameters");
+			System.exit(0);
+		} 
 		return url;
 	}
 	
@@ -184,12 +187,12 @@ public class Main {
 		Iterator<Element> bc = bodyChildren.iterator();
 		while (bc.hasNext()) {
 			--remainingLinks;
-			Element element = (Element) bc.next();		
+			Element element = (Element) bc.next();	
 			if(element.hasAttr("href") && isInternal(element.absUrl("href"))){		
 			String href = element.absUrl("href");
 			URL hrefUrl = initUrl(href);
 			if(!hrefUrl.toString().contains("#")){	
-//				System.out.println(base+"\t"+hrefUrl);
+				System.out.println(base+"\t"+hrefUrl);
 //				System.out.println("Remaining links :\t"+remainingLinks);
 				scan(initUrl(href), level);
 			}
@@ -207,6 +210,7 @@ public class Main {
 		DataOutputStream dos = new DataOutputStream(huc.getOutputStream());
 		System.out.println(xml);
 		dos.writeChars(xml);
+//		dos.writeUTF(xml);
 		dos.flush();
 		dos.close();
 		
