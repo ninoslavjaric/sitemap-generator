@@ -1,6 +1,7 @@
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.logging.Logger;
+
 import org.json.simple.parser.ParseException;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
@@ -27,7 +29,7 @@ public class Main {
 			supportedLinks = new HashSet<>();
 	private static ArrayList<SiteMapItem> smis = new ArrayList<>();
 	private static HashMap<String, Integer> locationOcurrence = new HashMap<>();
-	private static int remainingLinks = 0, levelDepth = 2;
+	private static int remainingLinks = 0, levelDepth = 3;
 	private static URL baseUrl = null, sitemapTarget = null;
 
 	public static void main(String[] args) throws IOException, ParseException {
@@ -59,8 +61,14 @@ public class Main {
 				return a2.occurence-a1.occurence;
 			}
 		});
-		int responseCode = pushSitemapToTarget(xmlOutput(smis));
-		System.out.println("Response code from server : "+responseCode);
+			int responseCode;
+		try{
+			responseCode = pushSitemapToTarget(xmlOutput(smis));
+		}catch(FileNotFoundException e){
+			responseCode = 404;
+			System.out.println("Location '"+sitemapTarget+"' does not exist.");
+		}
+		System.out.println("Status code from server : "+responseCode);
 	}
 	
 	private static String xmlOutput(ArrayList<SiteMapItem> al){
@@ -99,7 +107,6 @@ public class Main {
 				contentType = huc.getHeaderField("Content-type");
 				if(contentType.contains("text/html") && contentType != null)
 					supportedLinks.add(string);
-				System.out.println(huc.getResponseCode());
 			} catch (IOException | NullPointerException e) {
 				Logger.getLogger("content-type").warning("Ne valja nesto "+string);
 				e.printStackTrace();
@@ -108,8 +115,19 @@ public class Main {
 	}
 
 	private static URL initUrl(String[] params){
-		String link = params.length>=1?params[0]:null;
-		String updateLink = params.length>=2?params[1]:null;
+		String link="";
+		String updateLink="";
+		if(params.length>=2){
+			link = params[0];
+			updateLink = params[1];
+		}else{
+			System.out.println("You need to insert homepage url and sitemap update url."); 
+			System.out.println("Command format: java -jar filename.jar http://www.example.com http://www.example.com/sitemap-update-location [int searchLevelDepth]");
+			System.exit(0);
+		}
+		levelDepth = params[2]!=null? 
+				Integer.parseInt(params[2]) : 
+				levelDepth;
 		URL url = null, updateUrl = null;
 		try {
 			url = new URL(link);
@@ -120,7 +138,7 @@ public class Main {
 			e.printStackTrace();
 			System.out.println("You did not enter proper parameters");
 			System.exit(0);
-		} 
+		}
 		return url;
 	}
 	
@@ -187,12 +205,12 @@ public class Main {
 		Iterator<Element> bc = bodyChildren.iterator();
 		while (bc.hasNext()) {
 			--remainingLinks;
-			Element element = (Element) bc.next();	
+			Element element = (Element) bc.next();		
 			if(element.hasAttr("href") && isInternal(element.absUrl("href"))){		
 			String href = element.absUrl("href");
 			URL hrefUrl = initUrl(href);
 			if(!hrefUrl.toString().contains("#")){	
-				System.out.println(base+"\t"+hrefUrl);
+//				System.out.println(base+"\t"+hrefUrl);
 //				System.out.println("Remaining links :\t"+remainingLinks);
 				scan(initUrl(href), level);
 			}
@@ -210,7 +228,6 @@ public class Main {
 		DataOutputStream dos = new DataOutputStream(huc.getOutputStream());
 		System.out.println(xml);
 		dos.writeChars(xml);
-//		dos.writeUTF(xml);
 		dos.flush();
 		dos.close();
 		
