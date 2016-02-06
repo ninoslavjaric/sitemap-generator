@@ -14,7 +14,7 @@ Content-Type: text/xml
 
 CLI implementation:
 ```
-java -jar appname.jar {targetLocation} {xmlHandler} [{depth}]
+java -jar sitemapgen.jar {targetLocation} {xmlHandler} [{depth}]
 ```
 
 Parameter | default | Description
@@ -26,5 +26,5 @@ depth | 3 (int) | Search depth
 Example:
 
 ```
-java -jar appName.jar http://example.com http://example.com/xml-handler-uri
+java -jar sitemapgen.jar http://example.com http://example.com/xml-handler-uri
 ```
