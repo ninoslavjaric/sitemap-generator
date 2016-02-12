@@ -1,6 +1,6 @@
 # Sitemap generator
 
-Java application that goes through website and generates a list of all valid urls encountered during the search, sends the list (XML) to remote location.
+Java application that goes through website and generates a list of all valid urls found during the search, sends the list (XML) to remote location.
 
 Example of HTTP request:
 
